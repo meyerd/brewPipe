@@ -59,3 +59,7 @@ docs/_build/
 target/
 
 .idea
+
+data/
+oldcode/
+venv_winton/
