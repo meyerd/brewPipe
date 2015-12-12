@@ -28,6 +28,10 @@ class PipelineStateInterface(object):
         self._ps[stage_descriptor] = value
 
     def get(self, descriptor):
+        """
+        Retrieve a previously stored value. If nothing is stored
+        None will be returned.
+        """
         stage_descriptor = str(self.__class__.__name__) + \
             '##' + descriptor
         return self._ps[stage_descriptor]
