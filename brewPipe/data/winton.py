@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import numpy as np
 from ..pipelineState import PipelineStateInterface
+from ..data import BrewPipeDataFrame
 
 __author__ = 'Martin Kiechle <martin.kiechle@gmail.com>'
 
@@ -94,7 +95,10 @@ class WintonStockData(PipelineStateInterface):
         """
         self._load_csv_if_no_df()
         data = self._dfptr.ix[:, 1:26].as_matrix()
-        return np.nan_to_num(data)
+        tmp = np.nan_to_num(data)
+        r = BrewPipeDataFrame('winton##' + self._data_source + '##features')
+        r.data = tmp
+        return r
 
     def intraday_2_120(self):
         """
@@ -105,7 +109,9 @@ class WintonStockData(PipelineStateInterface):
         # linearly interpolate missing time-series data
         tmp = np.apply_along_axis(lambda x: pd.Series(x).interpolate(method='linear', limit_direction='both').values, 1, data)
         # tmp = self._own_linear_interpolator(data)
-        return tmp
+        r = BrewPipeDataFrame('winton##' + self._data_source + '##intraday_2_120')
+        r.data = tmp
+        return r
 
     def intraday_120_180(self):
         """
@@ -113,14 +119,20 @@ class WintonStockData(PipelineStateInterface):
         """
         self._fail_if_testmode()
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 147:207].as_matrix()
+        tmp = self._dfptr.ix[:, 147:207].as_matrix()
+        r = BrewPipeDataFrame('winton##' + self._data_source + '##intraday_120_180')
+        r.data = tmp
+        return r
 
     def returns_last_days(self):
         """
         :return: return day D-2 and day D-1
         """
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 26:27].as_matrix()
+        tmp = self._dfptr.ix[:, 26:27].as_matrix()
+        r = BrewPipeDataFrame('winton##' + self._data_source + '##returns_last_days')
+        r.data = tmp
+        return r
 
     def returns_next_days(self):
         """
@@ -128,7 +140,10 @@ class WintonStockData(PipelineStateInterface):
         """
         self._fail_if_testmode()
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 207:208].as_matrix()
+        tmp = self._dfptr.ix[:, 207:208].as_matrix()
+        r = BrewPipeDataFrame('winton##' + self._data_source + '##returns_next_days')
+        r.data = tmp
+        return r
 
     def weights(self):
         """
@@ -136,4 +151,7 @@ class WintonStockData(PipelineStateInterface):
         """
         self._fail_if_testmode()
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 209:210].as_matrix()
+        tmp = self._dfptr.ix[:, 209:210].as_matrix()
+        r = BrewPipeDataFrame('winton##' + self._data_source + '##weights')
+        r.data = tmp
+        return r
