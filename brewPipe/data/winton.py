@@ -3,6 +3,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 from ..pipelineState import PipelineStateInterface
 
 __author__ = 'Martin Kiechle <martin.kiechle@gmail.com>'
@@ -79,19 +80,32 @@ class WintonStockData(PipelineStateInterface):
         if self._data_source == 'test':
             raise RuntimeError("This data is not available if data_source is 'test'")
 
+    def _own_linear_interpolator(data):
+        def _1d_linear_interpolate(line):
+            # https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array
+            nans, posfunc = np.isnan(line), lambda x: x.nonzero()[0]
+            line[nans] = np.interp(posfunc(nans), posfunc(~nans), line[~nans])
+            return line
+        return np.apply_along_axis(_1d_linear_interpolate, 1, data)
+
     def features(self):
         """
         :return: external features
         """
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 1:26]
+        data = self._dfptr.ix[:, 1:26].as_matrix()
+        return np.nan_to_num(data)
 
     def intraday_2_120(self):
         """
         :return: return day D, minutes 2 - 120
         """
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 28:147]
+        data = self._dfptr.ix[:, 28:147].as_matrix()
+        # linearly interpolate missing time-series data
+        tmp = np.apply_along_axis(lambda x: pd.Series(x).interpolate(method='linear', limit_direction='both').values, 1, data)
+        # tmp = self._own_linear_interpolator(data)
+        return tmp
 
     def intraday_120_180(self):
         """
@@ -99,14 +113,14 @@ class WintonStockData(PipelineStateInterface):
         """
         self._fail_if_testmode()
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 147:207]
+        return self._dfptr.ix[:, 147:207].as_matrix()
 
     def returns_last_days(self):
         """
         :return: return day D-2 and day D-1
         """
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 26:27]
+        return self._dfptr.ix[:, 26:27].as_matrix()
 
     def returns_next_days(self):
         """
@@ -114,12 +128,12 @@ class WintonStockData(PipelineStateInterface):
         """
         self._fail_if_testmode()
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 207:208]
+        return self._dfptr.ix[:, 207:208].as_matrix()
 
     def weights(self):
         """
-        :return: weights for scoring
+        :return: weights for scoring [intraday, daily]
         """
         self._fail_if_testmode()
         self._load_csv_if_no_df()
-        return self._dfptr.ix[:, 209:210]
+        return self._dfptr.ix[:, 209:210].as_matrix()
