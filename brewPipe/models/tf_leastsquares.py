@@ -19,8 +19,13 @@ class TensorflowLeastSquares(PipelineStateInterface):
         self._output_dimension = output_dimension
         self._learn_rate = learn_rate
         self._batch_size = batch_size
+        self._x_data = None
+        self._y_data = None
+        self._n_samples = 0
 
-        self._result_W = np.zeros((self._output_dimension, self._input_dimension))
+        self._data_ptr = 0
+
+        self._result_W = np.zeros((self._input_dimension, self._output_dimension))
         self._result_b = np.zeros((self._output_dimension))
 
         self._graph = tf.Graph()
@@ -30,19 +35,38 @@ class TensorflowLeastSquares(PipelineStateInterface):
 
             # linear least squares, fit for every element of the
             # output vector one line
-            self._b = tf.Variable(tf.zeros_like(self._result_b))
+            self._b = tf.Variable(tf.zeros_like(self._result_b, dtype=tf.float32))
             self._W = tf.Variable(tf.random_uniform([self._result_W.shape[0],
-                                                     self._result_W.shape[1]], -1.0, 1.0))
+                                                     self._result_W.shape[1]], -1.0, 1.0,
+                                                    dtype=tf.float32))
 
-            self._y = tf.matmul(self._W, self._x) + self._b
+            self._y = tf.matmul(self._x, self._W) + self._b
 
             self._loss = tf.reduce_mean(tf.square(self._y - self._y_))
             self._optimizer = tf.train.GradientDescentOptimizer(self._learn_rate).minimize(self._loss)
 
     def _generate_batch(self):
-        # (num_examples, example dimension)
-        return (np.zeros((self._batch_size, self._input_dimension)),
-                np.zeros((self._batch_size, self._input_dimension)))
+        if self._n_samples <= 0:
+            raise RuntimeError("Data has to be set first.")
+
+        # TODO: make this more robust and shuffle data
+        if self._data_ptr >= self._n_samples:
+            self._data_ptr = 0
+        data_from = self._data_ptr
+        data_to = self._data_ptr + self._batch_size
+        self._data_ptr = data_to
+
+        return (self._x_data[data_from:data_to, :],
+                self._y_data[data_from:data_to, :])
+
+    def set_data(self, x, y):
+        self._x_data = x.data
+        self._y_data = y.data
+        x_samples = self._x_data.shape[0]
+        y_samples = self._y_data.shape[0]
+        if x_samples != y_samples:
+            raise RuntimeError("There have to be the same number of samples")
+        self._n_samples = x_samples
 
     def run(self, max_steps=1000):
         with tf.Session(graph=self._graph) as sess:
