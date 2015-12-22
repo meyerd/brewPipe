@@ -35,3 +35,4 @@ class PipelineStateInterface(object):
         stage_descriptor = str(self.__class__.__name__) + \
             '##' + descriptor
         return self._ps[stage_descriptor]
+
