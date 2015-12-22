@@ -4,6 +4,7 @@
 import tensorflow as tf
 import numpy as np
 from ..pipelineState import PipelineStateInterface
+from ..data import BrewPipeDataFrame
 
 __author__ = 'Dominik Meyer <meyerd@mytum.de>'
 
@@ -67,6 +68,23 @@ class TensorflowLeastSquares(PipelineStateInterface):
         if x_samples != y_samples:
             raise RuntimeError("There have to be the same number of samples")
         self._n_samples = x_samples
+
+    def apply_model(self, x):
+        x = x.data
+
+        tmp = np.zeros((1,1))
+        with tf.Session(graph=self._graph) as sess:
+            tf.initialize_all_tables().run()
+
+            feed_dict = {self._x: x,
+                         self._W: self._result_W,
+                         self._b: self._result_b}
+
+            tmp = sess.run(self._y, feed_dict=feed_dict)
+
+        ret = BrewPipeDataFrame('y')
+        ret.data = tmp
+        return ret
 
     def run(self, max_steps=1000):
         with tf.Session(graph=self._graph) as sess:
