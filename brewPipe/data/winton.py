@@ -73,7 +73,7 @@ class WintonStockData(PipelineStateInterface):
             filename = os.path.join(self._data_directory, 'train.csv')
             self._dfptr = self._train_df
         else:
-            filename = os.path.join(self._data_directory, 'test.csv')
+            filename = os.path.join(self._data_directory, 'test_2.csv')
             self._dfptr = self._test_df
 
         self._dfptr = self._check_and_load_df(self._data_source)
@@ -84,6 +84,22 @@ class WintonStockData(PipelineStateInterface):
     def _fail_if_testmode(self):
         if self._data_source == 'test':
             raise RuntimeError("This data is not available if data_source is 'test'")
+
+    @property
+    def _input_hash(self):
+        """
+        :return: The hash of the input data. In this case
+            we use the hash of the modification date of the input
+            files to detect if the files have changed and have to
+            be reread.
+        """
+        hstr = ''
+        for ds in ['train', 'test_2']:
+            filename = os.path.join(self._data_directory, ds + '.csv')
+            mtime = os.path.getmtime(filename)
+            hstr += str(mtime)
+        return hash(hstr)
+
     @staticmethod
     def _own_linear_interpolator(data):
         def _1d_linear_interpolate(line):
@@ -97,36 +113,56 @@ class WintonStockData(PipelineStateInterface):
         """
         :return: external features
         """
-        self._load_csv_if_no_df()
-        data = self._dfptr.ix[:, 1:26].as_matrix()
-        tmp = np.nan_to_num(data)
-        r = BrewPipeDataFrame('winton##' + self._data_source + '##features')
-        r.data = tmp
+        def cb(name):
+            obj = self
+            obj._load_csv_if_no_df()
+            data = obj._dfptr.ix[:, 1:26].as_matrix()
+            tmp = np.nan_to_num(data)
+            return tmp
+
+        r = BrewPipeDataFrame('winton##' + self._data_source + '##features',
+                              lazy_frame=True, hash=0, callback=cb)
         return r
 
     def intraday_2_120(self):
         """
         :return: return day D, minutes 2 - 120
         """
-        self._load_csv_if_no_df()
-        data = self._dfptr.ix[:, 28:147].as_matrix()
-        # linearly interpolate missing time-series data
-        # TODO: pandas still doesn't remove the NaNs
-        # tmp = np.apply_along_axis(lambda x: pd.Series(x).interpolate(method='linear', limit_direction='both').values, 1, data)
-        tmp = self._own_linear_interpolator(data)
-        r = BrewPipeDataFrame('winton##' + self._data_source + '##intraday_2_120')
-        r.data = tmp
+        dataname = 'winton##' + self._data_source + '##intraday_2_120'
+
+        def cb(name):
+            print "eval 120", name
+            obj = self
+            obj._load_csv_if_no_df()
+            data = obj._dfptr.ix[:, 28:147].as_matrix()
+            # linearly interpolate missing time-series data
+            # TODO: pandas still doesn't remove the NaNs
+            # tmp = np.apply_along_axis(lambda x: pd.Series(x).interpolate(method='linear', limit_direction='both').values, 1, data)
+            tmp = obj._own_linear_interpolator(data)
+            self.put(name, self._input_hash)
+            return tmp
+
+        h = self._input_hash
+        r = BrewPipeDataFrame(dataname, lazy_frame=True, hash=h, callback=cb)
         return r
 
     def intraday_120_180(self):
         """
         :return: return day D, minutes 121 - 180
         """
+        dataname = 'winton##' + self._data_source + '##intraday_120_180'
         self._fail_if_testmode()
-        self._load_csv_if_no_df()
-        tmp = self._dfptr.ix[:, 147:207].as_matrix()
-        r = BrewPipeDataFrame('winton##' + self._data_source + '##intraday_120_180')
-        r.data = tmp
+
+        def cb(name):
+            print "eval 180", name
+            obj = self
+            obj._load_csv_if_no_df()
+            tmp = obj._dfptr.ix[:, 147:207].as_matrix()
+            self.put(name, self._input_hash)
+            return tmp
+
+        h = self._input_hash
+        r = BrewPipeDataFrame(dataname, lazy_frame=True, hash=h, callback=cb)
         return r
 
     def returns_last_days(self):
