@@ -73,7 +73,7 @@ class PipelineState(object):
 
     @staticmethod
     def __missing__(stage):
-        return {}
+        return None
 
     def __delitem__(self, stage):
         with self._lock:
