@@ -7,7 +7,7 @@ import numpy as np
 from ..pipelineState import PipelineStateInterface
 from ..data import BrewPipeDataFrame
 
-__author__ = 'Martin Kiechle <martin.kiechle@gmail.com>'
+__author__ = 'Dominik Meyer <meyerd@mytum.de>'
 
 
 class WintonStockData(PipelineStateInterface):
@@ -17,7 +17,7 @@ class WintonStockData(PipelineStateInterface):
     """
     def __init__(self, data_directory="data",
                  intermediate_directory="intermediates",
-                 data_source="training"):
+                 data_source="train"):
         """
         Initialize the WintonStockData source.
         :param data_directory: Directory, where train.csv and
@@ -49,16 +49,19 @@ class WintonStockData(PipelineStateInterface):
                      complib='bzip2')
         return True
 
-    def _load_df(self, dfptr, dfpath):
-        dfptr = pd.read_hdf(dfpath)
-        return True
+    def _load_df(self, dfpath):
+        try:
+            dfptr = pd.read_hdf(dfpath)
+        except IOError:
+            return None
+        return dfptr
 
-    def _check_and_load_df(self, dfptr, name):
+    def _check_and_load_df(self, name):
         dfpath = self.get(self._build_df_name(name))
         if not dfpath:
             dfpath = os.path.join(self._intermediate_directory, 'winton_train.hdf5')
             self.put(self._build_df_name(name), dfpath)
-        return self._load_df(dfptr, dfpath)
+        return self._load_df(dfpath)
 
     def _load_csv_if_no_df(self):
         """
@@ -73,14 +76,15 @@ class WintonStockData(PipelineStateInterface):
             filename = os.path.join(self._data_directory, 'test.csv')
             self._dfptr = self._test_df
 
-        if not self._check_and_load_df(self._dfptr, self._data_source):
+        self._dfptr = self._check_and_load_df(self._data_source)
+        if self._dfptr is None:
             self._dfptr = pd.read_csv(filename, sep=",")
             self._persist_df(self._dfptr, self.get(self._build_df_name(self._data_source)))
 
     def _fail_if_testmode(self):
         if self._data_source == 'test':
             raise RuntimeError("This data is not available if data_source is 'test'")
-
+    @staticmethod
     def _own_linear_interpolator(data):
         def _1d_linear_interpolate(line):
             # https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array
@@ -107,8 +111,9 @@ class WintonStockData(PipelineStateInterface):
         self._load_csv_if_no_df()
         data = self._dfptr.ix[:, 28:147].as_matrix()
         # linearly interpolate missing time-series data
-        tmp = np.apply_along_axis(lambda x: pd.Series(x).interpolate(method='linear', limit_direction='both').values, 1, data)
-        # tmp = self._own_linear_interpolator(data)
+        # TODO: pandas still doesn't remove the NaNs
+        # tmp = np.apply_along_axis(lambda x: pd.Series(x).interpolate(method='linear', limit_direction='both').values, 1, data)
+        tmp = self._own_linear_interpolator(data)
         r = BrewPipeDataFrame('winton##' + self._data_source + '##intraday_2_120')
         r.data = tmp
         return r
