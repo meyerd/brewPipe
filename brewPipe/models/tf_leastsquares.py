@@ -15,7 +15,8 @@ class TensorflowLeastSquares(PipelineStateInterface):
     to figure out interfaces and integrate tensorflow.
     """
 
-    def __init__(self, input_dimension, output_dimension, learn_rate=0.1, batch_size=1):
+    def __init__(self, input_dimension, output_dimension, learn_rate=0.1,
+                 batch_size=1, silent=True):
         self._input_dimension = input_dimension
         self._output_dimension = output_dimension
         self._learn_rate = learn_rate
@@ -23,6 +24,7 @@ class TensorflowLeastSquares(PipelineStateInterface):
         self._x_data = None
         self._y_data = None
         self._n_samples = 0
+        self._silent = silent
 
         self._data_ptr = 0
 
@@ -97,15 +99,15 @@ class TensorflowLeastSquares(PipelineStateInterface):
 
                 _, loss_val = sess.run([self._optimizer, self._loss], feed_dict=feed_dict)
 
-                average_loss += loss_val
-
-                printinterval = 20
-                if step % printinterval == 0:
-                    if step > 0:
-                        average_loss /= printinterval
-                    print "Average loss at step ", step, ": ", average_loss
-                    average_loss = 0
-                    print sess.run(self._W), sess.run(self._b)
+                if not self._silent:
+                    average_loss += loss_val
+                    printinterval = 20
+                    if step % printinterval == 0:
+                        if step > 0:
+                            average_loss /= printinterval
+                        print "Average loss at step ", step, ": ", average_loss
+                        average_loss = 0
+                        print sess.run(self._W), sess.run(self._b)
 
             self._result_W = sess.run(self._W)
             self._result_b = sess.run(self._b)

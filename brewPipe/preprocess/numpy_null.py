@@ -26,6 +26,8 @@ class NumpyNullPreprocessor(PipelineStateInterface):
         super(NumpyNullPreprocessor, self).__init__()
 
         self._intermediate_directory = intermediate_directory
+        self._cached = False
+        self._cached_object = None
 
     def _persist_numpy(self, arr, name):
         filename = os.path.join(self._intermediate_directory,
@@ -42,19 +44,32 @@ class NumpyNullPreprocessor(PipelineStateInterface):
         return arr
 
     def preprocess(self, dataframe):
-        name = self.get(dataframe.name)
-        tmp = None
-        if not name:
-            org = dataframe.data
-            # preprocessing would happen here and be put to tmp
-            tmp = org
-            self._persist_numpy(tmp, dataframe.name)
-            self.put(dataframe.name, dataframe.name)
-            name = dataframe.name
-        else:
-            tmp = self._load_numpy(name)
-        r = BrewPipeDataFrame(name)
-        r.data = tmp
+        def cb(name):
+            obj = self
+            inp = dataframe
+            h = obj.get(inp.name)
+            tmp = None
+            if not h or h != inp.hash:
+                print "eval preproc", name
+                org = inp.data
+                # preprocessing would happen here and be put to tmp
+                tmp = org
+                h = inp.hash
+                obj._persist_numpy(tmp, inp.name)
+                obj.put(inp.name, h)
+            else:
+                if self._cached and self._cached == inp.hash:
+                    return self._cached_object
+                print "eval preproc", name
+                tmp = obj._load_numpy(inp.name)
+                self._cached_object = tmp
+                self._cached = inp.hash
+            return tmp
+
+        h = 0
+        if not self.get(dataframe.name) is None:
+            h = self.get(dataframe.name)
+        r = BrewPipeDataFrame(dataframe.name, lazy_frame=True, hash=h, callback=cb)
         return r
 
 
