@@ -113,6 +113,7 @@ class WintonStockData(PipelineStateInterface):
         """
         :return: external features
         """
+        dataname = 'winton##' + self._data_source + '##features'
         def cb(name):
             obj = self
             obj._load_csv_if_no_df()
@@ -120,8 +121,8 @@ class WintonStockData(PipelineStateInterface):
             tmp = np.nan_to_num(data)
             return tmp
 
-        r = BrewPipeDataFrame('winton##' + self._data_source + '##features',
-                              lazy_frame=True, hash=0, callback=cb)
+        h = self._input_hash
+        r = BrewPipeDataFrame(dataname, lazy_frame=True, hash=h, callback=cb)
         return r
 
     def intraday_2_120(self):
@@ -131,7 +132,6 @@ class WintonStockData(PipelineStateInterface):
         dataname = 'winton##' + self._data_source + '##intraday_2_120'
 
         def cb(name):
-            print "eval 120", name
             obj = self
             obj._load_csv_if_no_df()
             data = obj._dfptr.ix[:, 28:147].as_matrix()
@@ -154,7 +154,6 @@ class WintonStockData(PipelineStateInterface):
         self._fail_if_testmode()
 
         def cb(name):
-            print "eval 180", name
             obj = self
             obj._load_csv_if_no_df()
             tmp = obj._dfptr.ix[:, 147:207].as_matrix()
@@ -169,30 +168,48 @@ class WintonStockData(PipelineStateInterface):
         """
         :return: return day D-2 and day D-1
         """
-        self._load_csv_if_no_df()
-        tmp = self._dfptr.ix[:, 26:27].as_matrix()
-        r = BrewPipeDataFrame('winton##' + self._data_source + '##returns_last_days')
-        r.data = tmp
+        dataname = 'winton##' + self._data_source + '##returns_last_days'
+
+        def cb(name):
+            obj = self
+            obj._load_csv_if_no_df()
+            tmp = obj._dfptr.ix[:, 26:27].as_matrix()
+            return tmp
+
+        h = self._input_hash
+        r = BrewPipeDataFrame(dataname, lazy_frame=True, hash=h, callback=cb)
         return r
 
     def returns_next_days(self):
         """
         :return: return day D+1 and day D+2
         """
+        dataname = 'winton##' + self._data_source + '##returns_next_days'
         self._fail_if_testmode()
-        self._load_csv_if_no_df()
-        tmp = self._dfptr.ix[:, 207:208].as_matrix()
-        r = BrewPipeDataFrame('winton##' + self._data_source + '##returns_next_days')
-        r.data = tmp
+
+        def cb(name):
+            obj = self
+            obj._load_csv_if_no_df()
+            tmp = obj._dfptr.ix[:, 207:208].as_matrix()
+            return tmp
+
+        h = self._input_hash
+        r = BrewPipeDataFrame(dataname, lazy_frame=True, hash=h, callback=cb)
         return r
 
     def weights(self):
         """
         :return: weights for scoring [intraday, daily]
         """
+        dataname = 'winton##' + self._data_source + '##weights'
         self._fail_if_testmode()
-        self._load_csv_if_no_df()
-        tmp = self._dfptr.ix[:, 209:210].as_matrix()
-        r = BrewPipeDataFrame('winton##' + self._data_source + '##weights')
-        r.data = tmp
+
+        def cb(name):
+            obj = self
+            obj._load_csv_if_no_df()
+            tmp = obj._dfptr.ix[:, 209:210].as_matrix(dataname)
+            return tmp
+
+        h = self._input_hash
+        r = BrewPipeDataFrame(dataname, lazy_frame=True, hash=h, callback=cb)
         return r
