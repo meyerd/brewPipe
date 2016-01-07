@@ -50,7 +50,6 @@ class NumpyNullPreprocessor(PipelineStateInterface):
             h = obj.get(inp.name)
             tmp = None
             if not h or h != inp.hash:
-                print "eval preproc", name
                 org = inp.data
                 # preprocessing would happen here and be put to tmp
                 tmp = org
@@ -60,7 +59,6 @@ class NumpyNullPreprocessor(PipelineStateInterface):
             else:
                 if self._cached and self._cached == inp.hash:
                     return self._cached_object
-                print "eval preproc", name
                 tmp = obj._load_numpy(inp.name)
                 self._cached_object = tmp
                 self._cached = inp.hash
