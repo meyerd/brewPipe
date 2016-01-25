@@ -198,7 +198,7 @@ class WintonStockData(PipelineStateInterface):
         def cb(name):
             obj = self
             obj._load_csv_if_no_df()
-            tmp = obj._dfptr.ix[:, 207:208].as_matrix()
+            tmp = obj._dfptr.ix[:, 207:209].as_matrix()
             return tmp
 
         h = self._input_hash
