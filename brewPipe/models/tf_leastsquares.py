@@ -17,6 +17,8 @@ class TensorflowLeastSquares(PipelineStateInterface):
 
     def __init__(self, input_dimension, output_dimension, learn_rate=0.1,
                  batch_size=1, silent=True):
+        super(TensorflowLeastSquares, self).__init__()
+
         self._input_dimension = input_dimension
         self._output_dimension = output_dimension
         self._learn_rate = learn_rate
