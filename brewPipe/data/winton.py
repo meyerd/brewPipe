@@ -59,7 +59,10 @@ class WintonStockData(PipelineStateInterface):
     def _check_and_load_df(self, name):
         dfpath = self.get(self._build_df_name(name))
         if not dfpath:
-            dfpath = os.path.join(self._intermediate_directory, 'winton_train.hdf5')
+            if self._data_source == 'train':
+                dfpath = os.path.join(self._intermediate_directory, 'winton_train.hdf5')
+            else:
+                dfpath = os.path.join(self._intermediate_directory, 'winton_test.hdf5')
             self.put(self._build_df_name(name), dfpath)
         return self._load_df(dfpath)
 
@@ -94,7 +97,12 @@ class WintonStockData(PipelineStateInterface):
             be reread.
         """
         hstr = ''
-        for ds in ['train', 'test_2']:
+        hash_over = []
+        if self._data_source == 'train':
+            hash_over.append('train')
+        if self._data_source == 'test':
+            hash_over.append('test_2')
+        for ds in hash_over:
             filename = os.path.join(self._data_directory, ds + '.csv')
             mtime = os.path.getmtime(filename)
             hstr += str(mtime)

@@ -101,7 +101,7 @@ class TensorflowLeastSquares(PipelineStateInterface):
 
                 if not self._silent:
                     average_loss += loss_val
-                    printinterval = 20
+                    printinterval = 1000
                     if step % printinterval == 0:
                         if step > 0:
                             average_loss /= printinterval
