@@ -28,6 +28,9 @@ class WintonStockDataOutput(PipelineStateInterface):
         if os.path.exists(self._output_file) and not self._overwrite:
             raise RuntimeError("output '%s' already exists" % \
                                self._output_file)
+        self._data = None
+        self._n_samples = 0
+        self._prediction_size = 0
 
     def set_data(self, data):
         """
