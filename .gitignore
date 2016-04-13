@@ -65,3 +65,4 @@ pipelinestate.pickle
 data/
 oldcode/
 venv_winton/
+intermediates/
