@@ -8,6 +8,7 @@ from ..data import BrewPipeDataFrame
 
 __author__ = 'Dominik Meyer <meyerd@mytum.de>'
 
+# TODO: non functional yet
 
 class TensorflowLSTMIntraday(PipelineStateInterface):
     """
