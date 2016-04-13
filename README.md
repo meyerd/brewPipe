@@ -1,4 +1,4 @@
-## BrewPipe
+# BrewPipe
 
 BrewPipe is supposed to be a framework for quick prototypes in data processing.
 The idea is to have a data processing pipeline, that is general enough to 
@@ -28,14 +28,14 @@ have to happen as this data is already available in the cache. Also the data
 processing of a lazy dataframe is delayed until the very last moment just before
 the data is really needed.
 
-# Currently supported
+## Currently supported
 
 * Simple numpy model
 * TensorFlow
 * Pandas data loading
 * Lazy Dataframes
 
-# Example
+## Examples
 
 This example was written for the 
 [Winton Stock Market Challenge](https://www.kaggle.com/c/the-winton-stock-market-challenge) 
