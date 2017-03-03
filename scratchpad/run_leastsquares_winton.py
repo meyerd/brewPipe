@@ -3,7 +3,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 from brewPipe.data.winton import WintonStockData
 from brewPipe.data import BrewPipeDataFrame
 from brewPipe.output.winton import WintonStockDataOutput
@@ -15,7 +15,8 @@ __author__ = 'Dominik Meyer <meyerd@mytum.de>'
 
 
 if __name__ == '__main__':
-    winton_training = WintonStockData(data_directory="data/", intermediate_directory="intermediates/",
+    winton_training = WintonStockData(data_directory=os.path.join("data", "winton"),
+                                      intermediate_directory="intermediates/",
                                       data_source="train")
 
     x = winton_training.intraday_2_120()

@@ -15,7 +15,7 @@ class WintonStockData(PipelineStateInterface):
     Load the winton stock market challenge data
     into the pandas dataframe.
     """
-    def __init__(self, data_directory="data",
+    def __init__(self, data_directory=os.path.join("data", "winton"),
                  intermediate_directory="intermediates",
                  data_source="train"):
         """
